@@ -7,23 +7,22 @@
         exit
     timedatectl set-ntp true
 #### Создание файловых систем, монтирование и создание подтомов BTRFS
-Первый раздел (`/dev/sda1`) для `/boot/efi` (только для UEFI), 2-й раздел (`/dev/sda2`) для swap, 3-й раздел (`/dev/sda3`) для корня (`/`).
+Первый раздел (`/dev/sda1`) для `/boot/efi` (только для UEFI), 2-й раздел (`/dev/sda2`) для корня (`/`).
 
     mkfs.fat -F32 -n EFI /dev/sda1      # Только для UEFI.
-    mkswap -L swap /dev/sda2 && swapon /dev/sda2
-    mkfs.btrfs -f -L arch /dev/sda3 && mount -t btrfs /dev/sda3 /mnt
+    mkfs.btrfs -f -L arch /dev/sda2 && mount -t btrfs /dev/sda2 /mnt
     for i in @{,snapshots{,_home},home,tmp{,_var},cache,log}; do
         btrfs subvolume create /mnt/$i
     done
     umount -R /mnt
     # Флаг `ssd`, соответственно, для SSD.
-    mount -t btrfs -o subvol=@,defaults,compress=zstd,ssd /dev/sda3 /mnt
+    mount -t btrfs -o subvol=@,defaults,compress=zstd,ssd /dev/sda2 /mnt
     mkdir -p /mnt/{home,tmp,var/{tmp,cache,log}}
-    mount -t btrfs -o subvol=@home,defaults,compress=zstd,ssd /dev/sda3 /mnt/home
-    mount -t btrfs -o subvol=@tmp,defaults,compress=zstd,ssd /dev/sda3 /mnt/tmp
-    mount -t btrfs -o subvol=@tmp_var,defaults,compress=zstd,ssd /dev/sda3 /mnt/var/tmp
-    mount -t btrfs -o subvol=@cache,defaults,compress=zstd,ssd /dev/sda3 /mnt/var/cache
-    mount -t btrfs -o subvol=@log,defaults,compress=zstd,ssd /dev/sda3 /mnt/var/log
+    mount -t btrfs -o subvol=@home,defaults,compress=zstd,ssd /dev/sda2 /mnt/home
+    mount -t btrfs -o subvol=@tmp,defaults,compress=zstd,ssd /dev/sda2 /mnt/tmp
+    mount -t btrfs -o subvol=@tmp_var,defaults,compress=zstd,ssd /dev/sda2 /mnt/var/tmp
+    mount -t btrfs -o subvol=@cache,defaults,compress=zstd,ssd /dev/sda2 /mnt/var/cache
+    mount -t btrfs -o subvol=@log,defaults,compress=zstd,ssd /dev/sda2 /mnt/var/log
     mount /dev/sda1 /mnt/boot/efi   # Только для UEFI.
 Примечание: мы не подмонтировали `@snapshots` и `@snapshots_home` специально для того, чтобы потом не перемонтировать их для настройки `snapper`, а просто примонтировать их или перезагрузить систему (см. `fstab` в следующем разделе).
 #### Базовая установка и настройка
@@ -55,26 +54,28 @@
     grub-install --recheck /dev/sda     # Только для BIOS.
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub     # Только для UEFI.
     grub-mkconfig -o /boot/grub/grub.cfg
-    nvim /etc/pacman.conf +33   # Раскомментируем `#Color` и добавляем, после
+    nvim /etc/pacman.conf +33   # Раскомментируем `#Color` и добавляем после
                                 # `#VerbosePkgLists` `ILoveCandy`.
 #### Установка сервисов, рабочего окружения и приложений
     pacman -Sy --needed xorg-server xf86-video-intel xf86-video-ati
                                 # Не нужно это устанавливать, если вы будете
                                 # использовать Wayland.
                                 # `xf86-video-ati` для AMD, для NVIDIA —
-                                # `xf86-video-nouveau`.
+                                # `xf86-video-nouveau` или `nvidia`
     pacman -Sy --needed networkmanager pulseaudio youtube-dl android-tools \
-        android-udev imagemagick git xdg-user-dirs wget
+        android-udev imagemagick git xdg-user-dirs wget systemd-swap
     pacman -Sy --needed plasma kde-applications partitionmanager kvantum-qt5 \
         latte-dock
     pacman -Sy --needed firefox{,-adblock-plus,-extension-https-everywhere} \
         qbittorrent thunderbird vlc deadbeef gimp qalculate-gtk telegram-desktop \
         pycharm-community-edition anki cups libreoffice-fresh python-black \
         torbrowser-launcher discord ipython gutenprint fzf mesa-vdpau \
-        ttf-jetbrains-mono adobe-source-han-sans-jp-fonts \
+        ttf-jetbrains-mono adobe-source-han-sans-jp-fonts kitty alacritty \
         zsh-{autosuggestions,history-substring-search,syntax-highlighting,theme-powerlevel10k}
+#### Настройка `systemd-swap`
+    echo 'swapfc_enabled=1' > /etc/systemd/swap.conf.d/overrides.conf
 #### Запуск сервисов
-    systemctl enable NetworkManager bluetooth sddm org.cups.cupsd fstrim.timer
+    systemctl enable NetworkManager bluetooth sddm systemd-swap org.cups.cupsd fstrim.timer
     # `org.cups.cupsd` для принтера.
     # `fstrim.timer` для SSD.
 #### Настройка пользователей

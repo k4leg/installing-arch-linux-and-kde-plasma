@@ -1,5 +1,5 @@
 # <file system>                             <dir>               <type>  <options>                                                           <dump> <pass>
-# /dev/sda3 LABEL=arch
+# /dev/sda2 LABEL=arch
 UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx   /                   btrfs   rw,relatime,compress=zstd:3,ssd,space_cache,subvol=@                0   0
 # Раскоментируем следующую строчку тогда, когда будем настраивать snapper
 # UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx   /.snapshots         btrfs   rw,relatime,compress=zstd:3,ssd,space_cache,subvol=@snapshots       0   0
@@ -13,6 +13,3 @@ UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx   /var/log            btrfs   rw,relat
 
 # /dev/sda1 LABEL=efi
 UUID=xxxx-xxxx                              /boot/efi           vfat    rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro    0   2
-
-# /dev/sda2 LABEL=swap
-UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx   none                swap    defaults                                                            0   0
