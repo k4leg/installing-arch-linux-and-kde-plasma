@@ -1,4 +1,4 @@
-### Installing Arch Linux and KDE Plasma
+### Installing Arch Linux and Sway
 #### Initial preparation
     iwctl  # Connect to Wi-Fi.
         device list
@@ -6,6 +6,7 @@
         # Next, you will be prompted to enter a password for Wi-Fi.
         exit
     timedatectl set-ntp true
+
 #### Creating file systems, mounting and creating BTRFS subvolumes
 First partition (`/dev/sda1`) for `/boot/efi` (UEFI only), second partition
 (`/dev/sda2`) for root (`/`).
@@ -29,9 +30,10 @@ First partition (`/dev/sda1`) for `/boot/efi` (UEFI only), second partition
 Note: we didn't mount `@snapshots` and `@snapshots_home` specifically so that we
 would not remount them to configure `snapper` but simply mount them or reboot the
 system (see `fstab` in the next section).
+
 #### Basic installation and setup
     pacstrap /mnt base base-devel linux linux-firmware btrfs-progs grub zsh neovim \
-        sudo man-db man-pages ripgrep openssh
+        sudo man-db man-pages ripgrep
     # `intel-ucode` for Intel, `linux-firmware` for AMD.
     # `ntfs-3g` for NTFS support.
     # `os-prober` to find third-party OS (Windows, Mac OS, ...).
@@ -45,7 +47,7 @@ system (see `fstab` in the next section).
     nvim /etc/locale.conf  # Add `LANG=en_US.UTF-8`.
     echo "arch" > /etc/hostname
 
-    cat >> /etc/hosts << EOF
+    cat > /etc/hosts << EOF
     127.0.0.1   localhost
     ::1         localhost
     127.0.1.1   arch.localdomain    arch
@@ -58,33 +60,13 @@ system (see `fstab` in the next section).
     grub-install --recheck /dev/sda  # For BIOS only.
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub  # For UEFI only.
     grub-mkconfig -o /boot/grub/grub.cfg
-    nvim /etc/pacman.conf +33   # Uncomment `#Color` and add `ILoveCandy` after `#VerbosePkgLists`.
-#### Installing services, window manager and applications
-    pacman -Sy --needed xorg-server
-    # You don't need to install this if you will be using Wayland.
-    # `xf86-video-ati` for AMD, `xf86-video-nouveau`, `nvidia` or `nvidia-lts` for NVIDIA.
+    nvim /etc/pacman.conf +33  # Uncomment `#Color` and add `ILoveCandy` after `#VerbosePkgLists`.
 
-    pacman -Sy --needed networkmanager pulseaudio youtube-dl android-tools \
-        android-udev imagemagick git xdg-user-dirs wget systemd-swap cups \
-        gutenprint
-    pacman -Sy --needed plasma kde-applications partitionmanager kvantum-qt5 \
-        latte-dock
-    pacman -Sy --needed firefox{,-adblock-plus,-extension-https-everywhere} \
-        qbittorrent thunderbird vlc gimp qalculate-gtk telegram-desktop \
-        pycharm-community-edition anki libreoffice-fresh python-black \
-        python-isort torbrowser-launcher discord ipython mesa-vdpau \
-        ttf-jetbrains-mono adobe-source-han-sans-jp-fonts kitty \
-        zsh-{autosuggestions,history-substring-search,syntax-highlighting,theme-powerlevel10k}
-#### Setting up `systemd-swap`
-    echo 'swapfc_enabled=1' > /etc/systemd/swap.conf.d/overrides.conf
-#### Setting up `/etc/environment`
-    cat >> /etc/environment << EOF
-    VISUAL=nvim
-    EDITOR=nvim
-    EOF
-#### Service launch
-    systemctl enable NetworkManager bluetooth sddm systemd-swap org.cups.cupsd fstrim.timer
-    # `org.cups.cupsd` for a printer, `fstrim.timer` for SSD.
+#### Installing DE/WM and other
+- [KDE Plasma](DE/KDE%20Plasma.md)
+- [Sway](WM/Sway.md)
+- etc.
+
 #### Configuring users
     chsh -s /usr/bin/zsh
     passwd
@@ -95,14 +77,17 @@ system (see `fstab` in the next section).
         -m -N username
     passwd username
     sed -i '/^# %wheel ALL=(ALL) ALL$/s/^# //g' /etc/sudoers
+
 #### End of installation
     exit
     umount -R /mnt && swapoff -a && reboot
+
 #### Installing yay — the package manager for [AUR](https://aur.archlinux.org/)
     git clone https://aur.archlinux.org/yay.git ~
     cd ~/yay && makepkg -si && cd - && rm -rf ~/yay
+
 #### Setting up snapper
-    pacman -S snapper snap-pac
+    pacman -Sy --needed snapper snap-pac
     nvim /etc/fstab  # See an example for `fstab`.
     snapper -c root create-config /
     snapper -c home create-config /home
