@@ -4,15 +4,14 @@
     # `xf86-video-ati` for AMD, `xf86-video-nouveau`, `nvidia` or `nvidia-lts` for NVIDIA.
 
     pacman -Sy --needed networkmanager pulseaudio youtube-dl android-tools \
-        android-udev imagemagick git xdg-user-dirs wget systemd-swap cups \
-        gutenprint
+        android-udev git xdg-user-dirs wget systemd-swap cups gutenprint
     pacman -Sy --needed plasma kde-applications partitionmanager kvantum-qt5 \
-        latte-dock kitty
-    pacman -Sy --needed firefox{,-adblock-plus,-extension-https-everywhere} \
-        qbittorrent thunderbird vlc gimp qalculate-gtk telegram-desktop \
-        pycharm-community-edition anki libreoffice-fresh python-black \
-        python-isort torbrowser-launcher discord ipython mesa-vdpau \
-        ttf-jetbrains-mono adobe-source-han-sans-jp-fonts \
+        latte-dock kitty inter-font ttf-jetbrains-mono adobe-source-han-sans-jp-fonts
+    pacman -Sy --needed firefox{,-{adblock-plus,extension-https-everywhere,tridactyl}} \
+        transmission-qt thunderbird vlc gimp qalculate-gtk telegram-desktop \
+        libreoffice-still mesa-vdpau translate-shell ipython python-black \
+        python-isort pycharm-community-edition python-neovim python-jedi \
+        torbrowser-launcher discord anki flameshot lyx texlive-langcyrillic \
         zsh-{autosuggestions,history-substring-search,syntax-highlighting,theme-powerlevel10k}
 
 #### Setting up `systemd-swap`

@@ -84,7 +84,7 @@ system (see `fstab` in the next section).
 
 #### Installing yay — the package manager for [AUR](https://aur.archlinux.org/)
     git clone https://aur.archlinux.org/yay.git ~
-    cd ~/yay && makepkg -si && cd - && rm -rf ~/yay
+    cd ~/yay && makepkg -si && cd .. && rm -rf yay
 
 #### Setting up snapper
     pacman -Sy --needed snapper snap-pac

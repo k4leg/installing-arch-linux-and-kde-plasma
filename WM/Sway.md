@@ -1,16 +1,15 @@
 #### Installing Sway and other
     pacman -Sy --needed networkmanager pulseaudio youtube-dl android-tools \
         android-udev git xdg-user-dirs wget systemd-swap cups gutenprint \
-        mesa-vdpau openssh rkhunter
+        mesa-vdpau rkhunter
     pacman -Sy --needed lightdm-webkit-theme-litarvan sway grim slurp \
         wl-clipboard jq mako playerctl wofi network-manager-applet kitty \
-        xorg-server-xwayland swaylock polkit-gnome qt5ct gammastep \
-        otf-font-awesome waybar
-    pacman -Sy --needed firefox{,-adblock-plus,-extension-https-everywhere} \
+        xorg-server-xwayland swaylock polkit-gnome qt5ct gammastep waybar \
+        otf-font-awesome inter-font ttf-jetbrains-mono adobe-source-han-sans-jp-fonts
+    pacman -Sy --needed firefox{,-{adblock-plus,extension-https-everywhere,tridactyl}} \
         transmission-gtk thunderbird vlc gimp qalculate-gtk telegram-desktop \
-        ipython python-black python-isort pycharm-community-edition python-neovim\
-        python-jedi libreoffice-still torbrowser-launcher discord anki \
-        noto-fonts ttf-jetbrains-mono adobe-source-han-sans-jp-fonts \
+        ipython python-black python-isort pycharm-community-edition python-neovim \
+        python-jedi libreoffice-still torbrowser-launcher discord anki lyx texlive-langcyrillic \
         zsh-{autosuggestions,history-substring-search,syntax-highlighting,theme-powerlevel10k}
 
 #### Setting up lightdm
@@ -24,7 +23,9 @@
     cat >> /etc/environment << EOF
     VISUAL=nvim
     EDITOR=nvim
+
     QT_QPA_PLATFORMTHEME=qt5ct
+
     _JAVA_AWT_WM_NONREPARENTING=1
     EOF
 
