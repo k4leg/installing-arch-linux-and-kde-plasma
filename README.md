@@ -32,8 +32,8 @@ would not remount them to configure `snapper` but simply mount them or reboot th
 system (see `fstab` in the next section).
 
 #### Basic installation and setup
-    pacstrap /mnt base base-devel linux linux-firmware btrfs-progs grub zsh neovim \
-        sudo man-db man-pages ripgrep
+    pacstrap /mnt base{,-devel} linux-{lts,firmware} e2fsprogs btrfs-progs \
+        grub zsh neovim sudo man-{db,pages} texinfo ripgrep
     # `intel-ucode` for Intel, `linux-firmware` for AMD.
     # `ntfs-3g` for NTFS support.
     # `os-prober` to find third-party OS (Windows, Mac OS, ...).
@@ -58,7 +58,10 @@ system (see `fstab` in the next section).
 [Example](./fstab) for fstab.
 
     grub-install --recheck /dev/sda  # For BIOS only.
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub  # For UEFI only.
+    grub-install --recheck \
+                 --target=x86_64-efi \
+                 --efi-directory=/boot/efi \
+                 --bootloader-id=grub  # For UEFI only.
     grub-mkconfig -o /boot/grub/grub.cfg
     nvim /etc/pacman.conf +33  # Uncomment `#Color` and add `ILoveCandy` after `#VerbosePkgLists`.
 
@@ -68,13 +71,13 @@ system (see `fstab` in the next section).
 - etc.
 
 #### Configuring users
-    chsh -s /usr/bin/zsh
+    chsh -s `which zsh`
     passwd
     # Instead of `username` your username.
     useradd -d /home/username \
-        -s /usr/bin/zsh \
-        -G wheel,audio,video,input,adbusers \
-        -m -N username
+            -s `which zsh` \
+            -G wheel,audio,video,input,adbusers,users \
+            -m username
     passwd username
     sed -i '/^# %wheel ALL=(ALL) ALL$/s/^# //g' /etc/sudoers
 
