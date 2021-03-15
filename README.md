@@ -32,8 +32,8 @@ would not remount them to configure `snapper` but simply mount them or reboot th
 system (see `fstab` in the next section).
 
 #### Basic installation and setup
-    pacstrap /mnt base{,-devel} linux-{lts,firmware} e2fsprogs btrfs-progs \
-        grub zsh neovim sudo man-{db,pages} texinfo ripgrep
+    pacstrap /mnt base{,-devel} linux{,-firmware} btrfs-progs e2fsprogs grub \
+        zsh neovim sudo man-{db,pages} texinfo ripgrep
     # `intel-ucode` for Intel, `linux-firmware` for AMD.
     # `ntfs-3g` for NTFS support.
     # `os-prober` to find third-party OS (Windows, Mac OS, ...).
@@ -63,11 +63,11 @@ system (see `fstab` in the next section).
                  --efi-directory=/boot/efi \
                  --bootloader-id=grub  # For UEFI only.
     grub-mkconfig -o /boot/grub/grub.cfg
-    nvim /etc/pacman.conf +33  # Uncomment `#Color` and add `ILoveCandy` after `#VerbosePkgLists`.
+    # Uncomment `#Color`, and add `ILoveCandy`.
+    nvim /etc/pacman.conf +33
 
 #### Installing DE/WM and other
 - [KDE Plasma](DE/KDE%20Plasma.md)
-- [Sway](WM/Sway.md)
 - etc.
 
 #### Configuring users
@@ -76,21 +76,22 @@ system (see `fstab` in the next section).
     # Instead of `username` your username.
     useradd -d /home/username \
             -s `which zsh` \
-            -G wheel,audio,video,input,adbusers,users \
-            -m username
+            -G wheel,audio,video,input,adbusers,docker,users \
+            -m \
+            username
     passwd username
     sed -i '/^# %wheel ALL=(ALL) ALL$/s/^# //g' /etc/sudoers
 
 #### End of installation
     exit
-    umount -R /mnt && swapoff -a && reboot
+    umount -R /mnt && reboot
 
 #### Installing yay — the package manager for [AUR](https://aur.archlinux.org/)
-    git clone https://aur.archlinux.org/yay.git ~
-    cd ~/yay && makepkg -si && cd .. && rm -rf yay
+    git clone https://aur.archlinux.org/yay.git ~/yay
+    (cd ~/yay && makepkg -si) && rm -rf ~/yay
 
 #### Setting up snapper
-    pacman -Sy --needed snapper snap-pac
+    pacman -S --needed snapper snap-pac
     nvim /etc/fstab  # See an example for `fstab`.
     snapper -c root create-config /
     snapper -c home create-config /home
