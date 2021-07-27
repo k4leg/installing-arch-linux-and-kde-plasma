@@ -1,4 +1,4 @@
-### Installing Arch Linux and Sway
+### Installing Arch Linux
 #### Initial preparation
     iwctl  # Connect to Wi-Fi.
         device list
