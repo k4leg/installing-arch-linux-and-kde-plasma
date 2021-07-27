@@ -1,104 +1,112 @@
 ### Installing Arch Linux
 #### Initial preparation
-    iwctl  # Connect to Wi-Fi.
-        device list
-        station {wi-fi device} connect {SSID}
-        # Next, you will be prompted to enter a password for Wi-Fi.
-        exit
-    timedatectl set-ntp true
+```bash
+iwctl  # Connect to Wi-Fi.
+    device list
+    station {wi-fi device} connect {SSID}
+timedatectl set-ntp true
+```
 
-#### Creating file systems, mounting and creating BTRFS subvolumes
-First partition (`/dev/sda1`) for `/boot/efi` (UEFI only), second partition
-(`/dev/sda2`) for root (`/`).
+#### Creating file systems and mounting them
+Partition `/dev/sda1` for `/boot/efi` (UEFI only), partition `/dev/sda2` for
+root.
 
-    mkfs.fat -F32 -n EFI /dev/sda1  # For UEFI only.
-    mkfs.btrfs -f -L arch /dev/sda2 && mount -t btrfs /dev/sda2 /mnt
-    for i in @{,snapshots{,_home},home,tmp{,_var},cache,log}; do
-        btrfs subvolume create /mnt/$i
-    done
-    umount -R /mnt
-    # The `ssd` flag is for SSD respectively.
-    mount -t btrfs -o subvol=@,defaults,compress=zstd,ssd /dev/sda2 /mnt
-    mkdir -p /mnt/{home,tmp,var/{tmp,cache,log}}
-    mount -t btrfs -o subvol=@home,defaults,compress=zstd,ssd /dev/sda2 /mnt/home
-    mount -t btrfs -o subvol=@tmp,defaults,compress=zstd,ssd /dev/sda2 /mnt/tmp
-    mount -t btrfs -o subvol=@tmp_var,defaults,compress=zstd,ssd /dev/sda2 /mnt/var/tmp
-    mount -t btrfs -o subvol=@cache,defaults,compress=zstd,ssd /dev/sda2 /mnt/var/cache
-    mount -t btrfs -o subvol=@log,defaults,compress=zstd,ssd /dev/sda2 /mnt/var/log
-    mount /dev/sda1 /mnt/boot/efi  # For UEFI only.
-
-Note: we didn't mount `@snapshots` and `@snapshots_home` specifically so that we
-would not remount them to configure `snapper` but simply mount them or reboot the
-system (see `fstab` in the next section).
+```bash
+mkfs.ext4 -L arch /dev/sda2
+mount /dev/disk/by-label/arch /mnt
+# For UEFI only.
+mkfs.fat -n boot -F 32 /dev/sda1
+mkdir -p /mnt/boot/efi
+mount /dev/disk/by-label/boot /mnt/boot/efi
+```
 
 #### Basic installation and setup
-    pacstrap /mnt base{,-devel} linux{,-firmware} btrfs-progs e2fsprogs grub \
-        zsh neovim sudo man-{db,pages} texinfo ripgrep
-    # `intel-ucode` for Intel, `linux-firmware` for AMD.
-    # `ntfs-3g` for NTFS support.
-    # `os-prober` to find third-party OS (Windows, Mac OS, ...).
+[Example](fstab-example) for fstab.
 
-    genfstab -U /mnt >> /mnt/etc/fstab
-    arch-chroot /mnt zsh
-    ln -sf /usr/share/zoneinfo/Region/City /etc/localtime
-    hwclock --systohc
-    nvim /etc/locale.gen  # Uncomment `#en_US.UTF-8 UTF-8`.
-    locale-gen
-    nvim /etc/locale.conf  # Add `LANG=en_US.UTF-8`.
-    echo "arch" > /etc/hostname
+```bash
+# Add `intel-ucode` for Intel, `amd-ucode` for AMD.
+pacstrap /mnt base linux-{lts,firmware} e2fsprogs networkmanager neovim \
+    man-{db,pages} texinfo grub zsh sudo
+genfstab -U /mnt >> /mnt/etc/fstab  # Check /mnt/etc/fstab.
+arch-chroot /mnt zsh
+ln -sf /usr/share/zoneinfo/Region/City /etc/localtime
+hwclock --systohc
+nvim /etc/locale.gen  # Uncomment `#en_US.UTF-8 UTF-8`.
+locale-gen
+echo LANG=en_US.UTF-8 > /etc/locale.conf
+echo arch > /etc/hostname
+# `arch` is hostname.  If the system has a permanent IP address, it should be
+# used instead of 127.0.1.1.
+cat > /etc/hosts << EOF
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   arch.localdomain    arch
+EOF
+grub-install --recheck /dev/sda  # For BIOS only.
+grub-install --recheck \
+    --target=x86_64-efi \
+    --efi-directory=/boot/efi \
+    --bootloader-id=grub  # For UEFI only.
+grub-mkconfig -o /boot/grub/grub.cfg
+nvim /etc/pacman.conf  # Uncomment `#Color`, `#ParallelDownloads`.
+chsh -s "$(which zsh)"
+passwd
+useradd -d /home/username \
+    -s "$(which zsh)" \
+    -G wheel,audio,video,input,users \
+    -m \
+    username
+passwd username
+sed -i '/^# %wheel ALL=(ALL) ALL$/s/^# //g' /etc/sudoers
+logout
+umount -R /mnt && reboot
+# After booting and logging in as username in Arch Linux.
+systemctl enable --now NetworkManager
+nmtui  # Connect to Wi-Fi.
+```
 
-    cat > /etc/hosts << EOF
-    127.0.0.1   localhost
-    ::1         localhost
-    127.0.1.1   arch.localdomain    arch
-    EOF
+#### Installing other packages and DE/WM
+```bash
+pacman -S --needed base-devel apparmor networkmanager pipewire{,-pulse} \
+    youtube-dl wget git{,-delta} android-{tools,udev} systemd-swap cups \
+    gutenprint xdg-user-dirs openssh reflector pass pwgen pacman-contrib
+pacman -S --needed qbittorrent thunderbird vlc gimp inkscape qalculate-gtk \
+    telegram-desktop libreoffice-still translate-shell discord ipython anki \
+    torbrowser-launcher docker wireshark-qt texlive-{langcyrillic,fontsextra} \
+    python-{pip,pylint,black,isort,neovim} \
+    firefox{,-{i18n-en-us,clearurls,extension-https-everywhere,tridactyl,ublock-origin}} \
+    zsh-theme-powerlevel10k
+```
 
-    nvim /etc/fstab
-
-[Example](./fstab) for fstab.
-
-    grub-install --recheck /dev/sda  # For BIOS only.
-    grub-install --recheck \
-                 --target=x86_64-efi \
-                 --efi-directory=/boot/efi \
-                 --bootloader-id=grub  # For UEFI only.
-    grub-mkconfig -o /boot/grub/grub.cfg
-    # Uncomment `#Color`, and add `ILoveCandy`.
-    nvim /etc/pacman.conf +33
-
-#### Installing DE/WM and other
 - [KDE Plasma](DE/KDE%20Plasma.md)
-- etc.
 
-#### Configuring users
-    chsh -s `which zsh`
-    passwd
-    # Instead of `username` your username.
-    useradd -d /home/username \
-            -s `which zsh` \
-            -G wheel,audio,video,input,adbusers,docker,users \
-            -m \
-            username
-    passwd username
-    sed -i '/^# %wheel ALL=(ALL) ALL$/s/^# //g' /etc/sudoers
+#### Setting up `apparmor`
+```bash
+# Add "lsm=landlock,lockdown,yama,apparmor,bpf" to
+# `GRUB_CMDLINE_LINUX_DEFAULT`.
+nvim /etc/default/grub
+```
 
-#### End of installation
-    exit
-    umount -R /mnt && reboot
+#### Setting up `systemd-swap`
+```bash
+nvim /etc/systemd/swap.conf  # Set `swapfc_enabled=1`.
+```
 
-#### Installing yay — the package manager for [AUR](https://aur.archlinux.org/)
-    git clone https://aur.archlinux.org/yay.git ~/yay
-    (cd ~/yay && makepkg -si) && rm -rf ~/yay
+#### Service launch
+```bash
+systemctl enable apparmor systemd-swap cups fstrim.timer docker
+# `cups` for a printer, `fstrim.timer` for SSD.
+```
 
-#### Setting up snapper
-    pacman -S --needed snapper snap-pac
-    nvim /etc/fstab  # See an example for `fstab`.
-    snapper -c root create-config /
-    snapper -c home create-config /home
-    btrfs subvolume delete /.snapshots
-    btrfs subvolume delete /home/.snapshots
-    mkdir /{,home/}.snapshots
-    mount /.snapshots
-    mount /home/.snapshots
+#### Setting up users groups
+```bash
+usermod -aG docker,wireshark,adbusers username
+```
 
-Note: instead of the last two actions you can reboot.
+#### Installing [yay](https://github.com/Jguer/yay)
+```bash
+export PATH_TO_BUILD_DIR_YAY="$(mktemp -d)"
+git clone https://aur.archlinux.org/yay.git "$PATH_TO_BUILD_DIR_YAY"
+(cd "$PATH_TO_BUILD_DIR_YAY" && makepkg -si) && rm -rf "$PATH_TO_BUILD_DIR_YAY"
+```
+

@@ -1,0 +1,7 @@
+# <file system> <dir>   <type>  <options>   <dump>  <pass>
+# /dev/sda2 LABEL=arch
+UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx   /   btrfs   rw,relatime 0   1
+
+# /dev/sda1 LABEL=boot (for UEFI only)
+UUID=xxxx-xxxx  /boot/efi   vfat    rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro    0   2
+
